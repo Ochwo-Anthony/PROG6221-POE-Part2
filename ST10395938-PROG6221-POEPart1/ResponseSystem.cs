@@ -73,6 +73,8 @@ namespace ST10395938_PROG6221_POEPart1
         {
             try
             {
+                Random rand = new Random();
+
                 // Checking if the input contains certain keywords and providing appropriate responses.
                 if (input.Contains("how are you"))
                     return $"I'm doing well, {userName}! Ready to help you stay secure online.";
@@ -84,10 +86,26 @@ namespace ST10395938_PROG6221_POEPart1
                     return "You can ask me about:\n- Password safety\n- Phishing attacks\n- 2FA (Two-Factor Authentication)\n- Social media privacy\n- Safe browsing habits\n- Antivirus and firewalls";
 
                 else if (input.Contains("password"))
-                    return "Use strong passwords with a mix of uppercase, lowercase, numbers, and symbols. Don’t reuse them — try a password manager.";
+                {
+                    string[] passwordTips = {
+                        "Use strong passwords with uppercase, lowercase, numbers, and symbols.",
+                        "Avoid using personal details like your name or birthdate in passwords.",
+                        "Never reuse passwords across different accounts — use a password manager.",
+                        "Change your passwords regularly, especially if a breach is suspected."
+                    };
+                    return passwordTips[rand.Next(passwordTips.Length)];
+                }
 
-                else if (input.Contains("phishing"))
-                    return "Phishing is a scam to steal your info. Never click suspicious links or give out your login credentials by email.";
+                else if (input.Contains("phishing") || input.Contains("scam"))
+                {
+                    string[] phishingTips = {
+                        "Phishing is a scam to steal your info. Never click suspicious links or give out your login credentials.",
+                        "Look out for urgent-sounding emails that try to trick you into revealing personal data.",
+                        "Always double-check the sender’s email address before trusting a message.",
+                        "Use spam filters and avoid clicking links from unknown sources."
+                    };
+                    return phishingTips[rand.Next(phishingTips.Length)];
+                }
 
                 else if (input.Contains("safe browsing"))
                     return "Browse safely by updating your browser regularly and avoiding sketchy websites. Use HTTPS when possible!";
@@ -95,8 +113,16 @@ namespace ST10395938_PROG6221_POEPart1
                 else if (input.Contains("2fa") || input.Contains("two-factor"))
                     return "2FA adds an extra layer of protection. Even if someone gets your password, they can't log in without the code from your phone.";
 
-                else if (input.Contains("social media"))
-                    return "Be cautious! Don’t overshare. Lock down your privacy settings and avoid posting personal details publicly.";
+                else if (input.Contains("social media") || input.Contains("privacy"))
+                {
+                    string[] privacyTips = {
+                        "Don't overshare personal information like your address or phone number online.",
+                        "Adjust your privacy settings so only trusted people can see your content.",
+                        "Be cautious with friend requests — not everyone is who they say they are.",
+                        "Avoid posting your location or travel plans in real-time."
+                    };
+                    return privacyTips[rand.Next(privacyTips.Length)];
+                }
 
                 else if (input.Contains("firewall") || input.Contains("antivirus"))
                     return "A good antivirus and firewall help keep your device secure from malware, viruses, and unauthorized access.";
@@ -113,7 +139,7 @@ namespace ST10395938_PROG6221_POEPart1
                 };
 
                 // Randomly selecting one of the fallback responses.
-                Random rand = new Random();
+                
                 return fallbackResponses[rand.Next(fallbackResponses.Length)];
             }
             catch (Exception ex)
