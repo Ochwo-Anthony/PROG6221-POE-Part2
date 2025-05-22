@@ -38,7 +38,7 @@ Before running the application, ensure that you have the following:
 
 Setup and Installation:
 1. Clone the repository:
-   git clone https://github.com/Ochwo-Anthony/PROG6221-POE-Part1.git
+   git clone https://github.com/Ochwo-Anthony/PROG6221-POE-Part2.git
 
 2. Navigate to the project directory:
    cd ST10395938-PROg6221-POEPart1
