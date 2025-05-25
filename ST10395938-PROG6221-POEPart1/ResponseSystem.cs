@@ -1,80 +1,91 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ST10395938_PROG6221_POEPart1
 {
     internal class ResponseSystem
     {
+        private static string favoriteTopic = "";
+        private static Dictionary<string, int> topicCounts = new Dictionary<string, int>();
+        private static int messageCount = 0;
+        private static int proactivePromptThreshold = 3;
+
+        private static string lastTopicAnswered = "";
+        private static HashSet<int> usedTipIndexes = new HashSet<int>();
+
+        private static readonly string[] moreInfoTriggers = new string[]
+        {
+            "anything else",
+            "more info",
+            "tell me more",
+            "more information",
+            "what else",
+            "can you elaborate"
+        };
+
+        private static Random rand = new Random();
+
+        // Dictionary to hold all topic responses centrally for easy access
         private static readonly Dictionary<string, string[]> topicResponses = new Dictionary<string, string[]>
         {
-            ["password"] = new[]
+            ["password"] = new string[]
             {
-                "Use strong passwords with uppercase, lowercase, numbers, and symbols.",
-                "Avoid using personal details like your name or birthdate in passwords.",
-                "Never reuse passwords across accounts — use a password manager.",
-                "Change your passwords regularly, especially after a breach.",
-                "Use long, unique phrases instead of single words for better security."
+                "Use strong passwords with a mix of letters, numbers, and symbols.",
+                "Avoid reusing the same password across multiple sites.",
+                "Consider using a trusted password manager.",
+                "Don't include personal info like your birthday in your passwords."
             },
-            ["phishing"] = new[]
+            ["phishing"] = new string[]
             {
-                "Phishing is a scam to steal your info. Never click suspicious links or give out your login credentials.",
-                "Look out for urgent-sounding emails that try to trick you into revealing data.",
-                "Always double-check the sender’s email before trusting a message.",
-                "Avoid clicking links from unknown sources or downloading unexpected attachments.",
-                "Enable spam filters and educate yourself on common phishing techniques."
+                "Phishing is a scam to steal your info. Don’t click suspicious links.",
+                "Be cautious of emails asking for personal data.",
+                "Check the sender's email address for authenticity.",
+                "Never give out login details via email."
             },
-            ["privacy"] = new[]
+            ["privacy"] = new string[]
             {
-                "Don't overshare personal information like your address or phone number online.",
-                "Adjust your privacy settings so only trusted people can see your content.",
-                "Be cautious with friend requests — not everyone is who they say they are.",
-                "Avoid posting your real-time location or travel plans.",
-                "Use pseudonyms and private accounts if possible for personal protection."
+                "Lock down your social media privacy settings.",
+                "Avoid posting personal details publicly.",
+                "Regularly review app permissions.",
+                "Don’t overshare personal moments online."
             },
-            ["safe browsing"] = new[]
+            ["2fa"] = new string[]
             {
-                "Keep your browser updated to patch known vulnerabilities.",
-                "Avoid websites without HTTPS — they’re not secure.",
-                "Never download files from untrusted websites.",
-                "Use browser extensions that enhance privacy and security.",
-                "Enable pop-up blockers and avoid clicking on shady ads."
+                "2FA adds an extra layer of protection to your accounts.",
+                "Even with your password stolen, 2FA keeps hackers out.",
+                "Use apps like Google Authenticator for 2FA."
             },
-            ["2fa"] = new[]
+            ["safe browsing"] = new string[]
             {
-                "2FA adds a second layer of protection — use it wherever available.",
-                "Even if your password is stolen, 2FA keeps your account secure.",
-                "Use an authenticator app instead of SMS for more secure 2FA.",
-                "Enable 2FA on social media, email, and banking apps.",
-                "2FA makes account breaches significantly harder for attackers."
+                "Use browsers that support secure connections.",
+                "Avoid clicking on pop-ups or unknown ads.",
+                "Look for 'https://' in the web address."
             },
-            ["antivirus"] = new[]
+            ["antivirus"] = new string[]
             {
-                "Use trusted antivirus software to detect and block malware.",
-                "Firewalls protect your system from unauthorized access.",
-                "Keep your antivirus up to date to stay protected.",
-                "Run full scans periodically, not just real-time monitoring.",
-                "Don’t disable your firewall unless absolutely necessary."
+                "Firewalls help block unauthorized access to your computer.",
+                "Keep your antivirus software up-to-date.",
+                "Run regular scans to check for malware."
             },
-            ["cloud"] = new[]
+            ["cloud"] = new string[]
             {
-                "Use strong passwords and 2FA for your cloud storage accounts.",
-                "Only share files with people you trust — and audit permissions regularly.",
-                "Back up critical data locally in case cloud access is lost.",
-                "Avoid uploading sensitive documents unless necessary.",
-                "Use encryption when storing sensitive files in the cloud."
+                "Enable 2FA on your cloud accounts.",
+                "Don’t store sensitive info in unencrypted form.",
+                "Choose trusted cloud providers."
             }
+        };
+
+        // Sentiment keywords and their empathetic responses
+        private static readonly Dictionary<string, string> sentimentResponses = new Dictionary<string, string>()
+        {
+            ["worried"] = "It's completely understandable to feel that way. Scammers can be very convincing. Let me share some tips to help you stay safe.",
+            ["curious"] = "That's great! Curiosity is the first step to staying safe online. Let me provide some useful info.",
+            ["frustrated"] = "I know cybersecurity can feel overwhelming at times. I'm here to help make it simpler for you."
         };
 
         public static void StartInteraction(string userName)
         {
-            string lastTopic = null;
-            string favoriteTopic = null;
-            Dictionary<string, int> topicFrequency = new Dictionary<string, int>();
-            Random rand = new Random();
-
-            foreach (var topic in topicResponses.Keys)
-                topicFrequency[topic] = 0;
-
             while (true)
             {
                 Console.ForegroundColor = ConsoleColor.Blue;
@@ -82,6 +93,7 @@ namespace ST10395938_PROG6221_POEPart1
                 Console.ResetColor();
 
                 string userInput = Console.ReadLine()?.Trim().ToLower();
+                messageCount++;
 
                 if (string.IsNullOrEmpty(userInput))
                 {
@@ -96,19 +108,19 @@ namespace ST10395938_PROG6221_POEPart1
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine(new string('*', 80));
                     Console.WriteLine(@"
-        .-'''-.        .-'''-.                                                         
-       '   _    \     '   _    \ _______                                               
-     /   /` '.   \  /   /` '.   \\  ___ `'.   /|                        __.....__      
-.--./).   |     \  ' .   |     \  ' ' |--.\  \  ||    .-.          .- .-''         '.    
-/.''\\ |   '      |  '|   '      |  '| |    \  ' ||     \ \        / //     .-''""'-.  `.  
-| |  | |\    \     / / \    \     / / | |     |  '||  __  \ \      / //     /________\   \ 
-\`-' /  `.   ` ..' /   `.   ` ..' /  | |     |  |||/'__ '.\ \    / / |                  | 
-/(""'`      '-...-'`       '-...-'`   | |     ' .'|:/`  '. '\ \  / /  \    .-------------' 
-\ '---.                              | |___.' /' ||     | | \ `  /    \    '-.____...---. 
-/'""""'.\                            /_______.'/  ||\    / '  \  /      `.             .'  
-||     ||                           \_______|/   |/\'..' /   / /         `''-...... -'    
-\'. __//                                         '  `'-'`|`-' /                            
- `'---'                                                   '..'                             
+            .-'''-.        .-'''-.                                                         
+           '   _    \     '   _    \ _______                                              
+         /   /` '.   \  /   /` '.   \\  ___ `'.   /|                       __.....__      
+  .--./).   |     \  ' .   |     \  ' ' |--.\  \  ||    .-.         .- .-''         '.    
+ /.''\\ |   '      |  '|   '      |  '| |    \  ' ||     \ \       / //     .-''""'-.  `.  
+| |  | |\    \     / / \    \     / / | |     |  '||  __  \ \     / //     /________\   \ 
+ \`-' /  `.   ` ..' /   `.   ` ..' /  | |     |  |||/'__ '.\ \   / / |                  | 
+ /(""'`      '-...-'`       '-...-'`   | |     ' .'|:/`  '. '\ \ / /  \    .-------------' 
+ \ '---.                              | |___.' /' ||     | |  \_/     \    '-.____...---. 
+  /'""""'.\                            /_______.'/  ||\    / '         `.             .'  
+ ||     ||                           \_______|/   |/\'..' /           `''-...... -'    
+ \'. __//                                         '  `'-'`                                 
+  `'---'                                                                                  
 ");
                     Console.WriteLine($"          Thank you, {userName}! Stay safe online!");
                     Console.WriteLine(new string('*', 80));
@@ -116,88 +128,124 @@ namespace ST10395938_PROG6221_POEPart1
                     break;
                 }
 
-                string response = GetResponse(userInput, userName, ref lastTopic, ref favoriteTopic, topicFrequency, rand);
+                string response = GetResponse(userInput, userName);
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine(response);
                 Console.ResetColor();
+
+                // Proactive tip based on favorite topic
+                if (messageCount % proactivePromptThreshold == 0 && !string.IsNullOrEmpty(favoriteTopic))
+                {
+                    string[] tips = GetResponsesByTopic(favoriteTopic);
+                    if (tips.Length > 0)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"\nAs a quick reminder based on your interest in {favoriteTopic}:\n{tips[rand.Next(tips.Length)]}");
+                        Console.ResetColor();
+                    }
+                }
             }
         }
 
-        private static string GetResponse(string input, string userName, ref string lastTopic, ref string favoriteTopic, Dictionary<string, int> topicFrequency, Random rand)
+        private static string GetResponse(string input, string userName)
         {
-            try
+            // Sentiment detection
+            foreach (var sentiment in sentimentResponses.Keys)
             {
-                // Handle user-declared favorite topic
-                if (input.Contains("i'm interested in") || input.Contains("my favorite topic is"))
+                if (input.Contains(sentiment))
                 {
-                    foreach (var topic in topicResponses.Keys)
-                    {
-                        if (input.Contains(topic))
-                        {
-                            favoriteTopic = topic;
-                            lastTopic = topic;
-                            return $"Great! I'll remember that you're interested in {topic}, {userName}. It's a crucial part of staying safe online.";
-                        }
-                    }
+                    return sentimentResponses[sentiment];
                 }
-
-                // Follow-up continuation
-                if ((input.Contains("more") || input.Contains("again") || input.Contains("details") || input.Contains("explain")) && lastTopic != null)
-                {
-                    if (topicResponses.ContainsKey(lastTopic))
-                        return topicResponses[lastTopic][rand.Next(topicResponses[lastTopic].Length)];
-                }
-
-                if (input.Contains("how are you"))
-                    return $"I'm doing well, {userName}! Ready to help you stay secure online.";
-
-                if (input.Contains("your purpose"))
-                    return "I'm your cybersecurity buddy — here to educate and protect you online.";
-
-                if (input.Contains("what can i ask") || input.Contains("help"))
-                    return "You can ask me about:\n- Password safety\n- Phishing attacks\n- 2FA (Two-Factor Authentication)\n- Social media privacy\n- Safe browsing habits\n- Antivirus and firewalls";
-
-                foreach (var topic in topicResponses.Keys)
-                {
-                    if (input.Contains(topic))
-                    {
-                        lastTopic = topic;
-                        topicFrequency[topic]++;
-
-                        // Auto-update favorite topic by frequency
-                        string mostFrequent = null;
-                        int maxCount = 0;
-                        foreach (var pair in topicFrequency)
-                        {
-                            if (pair.Value > maxCount)
-                            {
-                                maxCount = pair.Value;
-                                mostFrequent = pair.Key;
-                            }
-                        }
-
-                        if (mostFrequent != null)
-                            favoriteTopic = mostFrequent;
-
-                        return topicResponses[topic][rand.Next(topicResponses[topic].Length)];
-                    }
-                }
-
-                string[] fallbackResponses = {
-                    $"Hmm, I'm not sure about that, {userName}. Try asking something like 'What is phishing?' or 'Tips for safe browsing'.",
-                    $"Interesting question! I may need an update to answer that one.",
-                    $"That's outside my expertise, {userName}. But I'm always learning!",
-                    favoriteTopic != null
-                        ? $"As someone interested in {favoriteTopic}, you might enjoy learning how to protect yourself in that area."
-                        : $"Cybersecurity is broad! Try narrowing your question to something like passwords, scams, or privacy."
-                };
-
-                return fallbackResponses[rand.Next(fallbackResponses.Length)];
             }
-            catch (Exception ex)
+
+            // Check if user asked for more info on last topic
+            if (moreInfoTriggers.Any(trigger => input.Contains(trigger)) && !string.IsNullOrEmpty(lastTopicAnswered))
             {
-                return $"Oops! Something went wrong: {ex.Message}";
+                var tips = topicResponses.ContainsKey(lastTopicAnswered) ? topicResponses[lastTopicAnswered] : null;
+                if (tips != null && tips.Length > 0)
+                {
+                    // Pick a tip not already used
+                    var availableIndexes = Enumerable.Range(0, tips.Length).Where(i => !usedTipIndexes.Contains(i)).ToList();
+                    if (availableIndexes.Count == 0)
+                    {
+                        // Reset if all used
+                        usedTipIndexes.Clear();
+                        availableIndexes = Enumerable.Range(0, tips.Length).ToList();
+                    }
+
+                    int selectedIndex = availableIndexes[rand.Next(availableIndexes.Count)];
+                    usedTipIndexes.Add(selectedIndex);
+
+                    return tips[selectedIndex];
+                }
+                else
+                {
+                    // No tips found for last topic
+                    return $"I've shared all I know about {lastTopicAnswered}, but feel free to ask about other topics!";
+                }
             }
+
+            // Handle greetings or common questions
+            if (input.Contains("how are you"))
+                return $"I'm doing well, {userName}! Ready to help you stay secure online.";
+
+            if (input.Contains("your purpose"))
+                return "I'm your cybersecurity buddy — here to educate and protect you online.";
+
+            if (input.Contains("what can i ask") || input.Contains("help"))
+                return "You can ask me about:\n- Password safety\n- Phishing attacks\n- 2FA (Two-Factor Authentication)\n- Social media privacy\n- Safe browsing habits\n- Antivirus and firewalls";
+
+            // Check topic keywords in input for responses
+            foreach (var topic in topicResponses.Keys)
+            {
+                if (input.Contains(topic))
+                {
+                    UpdateTopicCount(topic);
+                    lastTopicAnswered = topic;       // Track last topic
+                    usedTipIndexes.Clear();          // Reset tips tracker for new topic
+                    var responses = topicResponses[topic];
+                    return responses[rand.Next(responses.Length)];
+                }
+            }
+
+            // Memory recall: remember interest
+            if (input.Contains("i'm interested in"))
+            {
+                // Try to get last word as topic
+                string[] words = input.Split(' ');
+                string interest = words.Last();
+                UpdateTopicCount(interest);
+                return $"Great! I'll remember that you're interested in {interest}. It's a crucial part of staying safe online.";
+            }
+
+            // Fallback responses for unknown input
+            string[] fallbackResponses = {
+                $"Hmm, I'm not sure about that, {userName}. Try asking something like 'What is phishing?'",
+                $"That's an interesting question! I'll try to learn more about that.",
+                $"Cybersecurity is broad! Try narrowing your question to passwords, scams, or privacy.",
+                $"I may need an update to answer that — try asking about 2FA, antivirus, or phishing."
+            };
+
+            return fallbackResponses[rand.Next(fallbackResponses.Length)];
+        }
+
+        private static void UpdateTopicCount(string topic)
+        {
+            if (topicCounts.ContainsKey(topic))
+                topicCounts[topic]++;
+            else
+                topicCounts[topic] = 1;
+
+            // Determine the most frequently mentioned topic
+            favoriteTopic = topicCounts.OrderByDescending(kv => kv.Value).First().Key;
+        }
+
+        private static string[] GetResponsesByTopic(string topic)
+        {
+            if (topicResponses.ContainsKey(topic))
+                return topicResponses[topic];
+            else
+                return new string[0];
         }
     }
 }
