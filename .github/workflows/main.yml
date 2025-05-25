@@ -1,0 +1,29 @@
+name: C# Console App CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0'
+
+    - name: Restore dependencies
+      run: dotnet restore ST10395938-PROG6221-POEPart1/ST10395938-PROG6221-POEPart1.csproj
+
+    - name: Build the app
+      run: dotnet dotnet build ST10395938-PROG6221-POEPart1/ST10395938-PROG6221-POEPart1.csproj
+
+    - name: Run tests
+      run: dotnet test ST10395938-PROG6221-POEPart1/ST10395938-PROG6221-POEPart1.csproj
