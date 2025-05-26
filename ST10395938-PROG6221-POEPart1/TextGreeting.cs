@@ -43,7 +43,7 @@ namespace ST10395938_PROG6221_POEPart1
                     Console.WriteLine($"║  Welcome, {userName}! Your Cyber Buddy is here.  ");
                     Console.WriteLine($"╚══════════════════════════════════════════════╝");
                     Console.ResetColor();
-                    Console.WriteLine("Type something like 'password tips', 'safe browsing', or type 'exit' to quit.");
+                    Console.WriteLine("Type something like 'password tips', 'phishing', 'privacy', '2FA', 'safe browsing', 'antivirus', or 'cloud', or type 'exit' to quit.");
                     break;
                 }
 
