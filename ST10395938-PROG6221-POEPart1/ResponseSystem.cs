@@ -6,27 +6,38 @@ namespace ST10395938_PROG6221_POEPart1
 {
     internal class ResponseSystem
     {
+        // Tracks the user's favorite (most frequently asked) topic
         private static string favoriteTopic = "";
-        private static Dictionary<string, int> topicCounts = new Dictionary<string, int>();
-        private static int messageCount = 0;
-        private static int proactivePromptThreshold = 3;
 
+        // Stores how many times each topic has been asked about
+        private static Dictionary<string, int> topicCounts = new Dictionary<string, int>();
+
+        // Counter for the number of messages exchanged
+        private static int messageCount = 0;
+
+        // Number of interactions before suggesting a proactive tip
+        private static int proactivePromptThreshold = 5;
+
+        // Last topic the chatbot responded to
         private static string lastTopicAnswered = "";
+
+        // Keeps track of which tips have already been shown for the current topic
         private static HashSet<int> usedTipIndexes = new HashSet<int>();
 
+        // Stores the current detected mood of the user
+        private static string currentMood = "";
+
+        // Keywords/phrases that trigger a "tell me more" type response
         private static readonly string[] moreInfoTriggers = new string[]
         {
-            "anything else",
-            "more info",
-            "tell me more",
-            "more information",
-            "what else",
-            "can you elaborate"
+            "anything else", "more info", "tell me more",
+            "more information", "what else", "can you elaborate"
         };
 
+        // Random generator for selecting random responses
         private static Random rand = new Random();
 
-        // Dictionary to hold all topic responses centrally for easy access
+        // Core dictionary mapping each topic to a list of potential responses
         private static readonly Dictionary<string, string[]> topicResponses = new Dictionary<string, string[]>
         {
             ["password"] = new string[]
@@ -76,7 +87,7 @@ namespace ST10395938_PROG6221_POEPart1
             }
         };
 
-        // Sentiment keywords and their empathetic responses
+        // Responses that reflect the user's mood
         private static readonly Dictionary<string, string> sentimentResponses = new Dictionary<string, string>()
         {
             ["worried"] = "It's completely understandable to feel that way. Scammers can be very convincing. Let me share some tips to help you stay safe.",
@@ -84,10 +95,12 @@ namespace ST10395938_PROG6221_POEPart1
             ["frustrated"] = "I know cybersecurity can feel overwhelming at times. I'm here to help make it simpler for you."
         };
 
+        // Entry point for the chatbot conversation
         public static void StartInteraction(string userName)
         {
             while (true)
             {
+                // Prompt user for input
                 Console.ForegroundColor = ConsoleColor.Blue;
                 Console.Write("\nAsk me something: ");
                 Console.ResetColor();
@@ -105,35 +118,38 @@ namespace ST10395938_PROG6221_POEPart1
 
                 if (userInput == "exit")
                 {
+                    // Exit message with ASCII art
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine(new string('*', 80));
                     Console.WriteLine(@"
             .-'''-.        .-'''-.                                                         
            '   _    \     '   _    \ _______                                              
-         /   /` '.   \  /   /` '.   \\  ___ `'.   /|                       __.....__      
+         /   / '.   \  /   / '.   \\  ___ '.   /|                       __.....__         
   .--./).   |     \  ' .   |     \  ' ' |--.\  \  ||    .-.         .- .-''         '.    
- /.''\\ |   '      |  '|   '      |  '| |    \  ' ||     \ \       / //     .-''""'-.  `.  
+ /.''\\ |   '      |  '|   '      |  '| |    \  ' ||     \ \       / //     .-''""'-.  .  
 | |  | |\    \     / / \    \     / / | |     |  '||  __  \ \     / //     /________\   \ 
- \`-' /  `.   ` ..' /   `.   ` ..' /  | |     |  |||/'__ '.\ \   / / |                  | 
- /(""'`      '-...-'`       '-...-'`   | |     ' .'|:/`  '. '\ \ / /  \    .-------------' 
- \ '---.                              | |___.' /' ||     | |  \_/     \    '-.____...---. 
-  /'""""'.\                            /_______.'/  ||\    / '| |       `.             .'  
- ||     ||                           \_______|/   |/\'..' /   | |      `''-...... -'    
- \'. __//                                         '  `'-'`    | |                           
-  `'---'                                                                                  
+ \-' /  .    ..' /   .    ..' /  | |     |  |||/'__ '.\ \   / / |                  |      
+ /(""'      '-...-'       '-...-'   | |     ' .'|:/  '. '\ \ / /  \    .-------------'     
+ \ '---.                              | |___.' /' ||     | |  \_/     \    '-.____...---.  
+  /'""""'.\                            /_______.'/  ||\    / '| |       .             .'   
+ ||     ||                           \_______|/   |/\'..' /   | |      ''-...... -'        
+ \'. __//                                         '  '-'    | |                            
+  '---'                                                                                   
 ");
-                    Console.WriteLine($"          Thank you, {userName}! Stay safe online!");
+                    Console.WriteLine("\nThank you, " + userName + "! Stay safe online.");
                     Console.WriteLine(new string('*', 80));
                     Console.ResetColor();
                     break;
                 }
 
+                // Generate a response based on user input
                 string response = GetResponse(userInput, userName);
+
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine(response);
                 Console.ResetColor();
 
-                // Proactive tip based on favorite topic
+                // Proactively remind user about their favorite topic
                 if (messageCount % proactivePromptThreshold == 0 && !string.IsNullOrEmpty(favoriteTopic))
                 {
                     string[] tips = GetResponsesByTopic(favoriteTopic);
@@ -147,45 +163,45 @@ namespace ST10395938_PROG6221_POEPart1
             }
         }
 
+        // Main logic for deciding what response to return
         private static string GetResponse(string input, string userName)
         {
-            // Sentiment detection
+            // Mood detection: if user mentions "worried", "curious", or "frustrated"
             foreach (var sentiment in sentimentResponses.Keys)
             {
                 if (input.Contains(sentiment))
                 {
+                    currentMood = sentiment;
                     return sentimentResponses[sentiment];
                 }
             }
 
-            // Check if user asked for more info on last topic
+            // Check for follow-up prompts like "tell me more"
             if (moreInfoTriggers.Any(trigger => input.Contains(trigger)) && !string.IsNullOrEmpty(lastTopicAnswered))
             {
-                var tips = topicResponses.ContainsKey(lastTopicAnswered) ? topicResponses[lastTopicAnswered] : null;
+                var tips = topicResponses[lastTopicAnswered];
                 if (tips != null && tips.Length > 0)
                 {
-                    // Pick a tip not already used
-                    var availableIndexes = Enumerable.Range(0, tips.Length).Where(i => !usedTipIndexes.Contains(i)).ToList();
+                    var availableIndexes = Enumerable.Range(0, tips.Length)
+                        .Where(i => !usedTipIndexes.Contains(i)).ToList();
+
                     if (availableIndexes.Count == 0)
                     {
-                        // Reset if all used
                         usedTipIndexes.Clear();
                         availableIndexes = Enumerable.Range(0, tips.Length).ToList();
                     }
 
                     int selectedIndex = availableIndexes[rand.Next(availableIndexes.Count)];
                     usedTipIndexes.Add(selectedIndex);
-
-                    return tips[selectedIndex];
+                    return AdaptResponseToMood(tips[selectedIndex], currentMood);
                 }
                 else
                 {
-                    // No tips found for last topic
                     return $"I've shared all I know about {lastTopicAnswered}, but feel free to ask about other topics!";
                 }
             }
 
-            // Handle greetings or common questions
+            // Built-in responses for common greetings/questions
             if (input.Contains("how are you"))
                 return $"I'm doing well, {userName}! Ready to help you stay secure online.";
 
@@ -195,30 +211,34 @@ namespace ST10395938_PROG6221_POEPart1
             if (input.Contains("what can i ask") || input.Contains("help"))
                 return "You can ask me about:\n- Password safety\n- Phishing attacks\n- 2FA (Two-Factor Authentication)\n- Social media privacy\n- Safe browsing habits\n- Antivirus and firewalls";
 
-            // Check topic keywords in input for responses
+            // Try to match input to a cybersecurity topic
             foreach (var topic in topicResponses.Keys)
             {
                 if (input.Contains(topic))
                 {
                     UpdateTopicCount(topic);
-                    lastTopicAnswered = topic;       // Track last topic
-                    usedTipIndexes.Clear();          // Reset tips tracker for new topic
+                    lastTopicAnswered = topic;
+                    usedTipIndexes.Clear();
+
+                    currentMood = "";
+
                     var responses = topicResponses[topic];
-                    return responses[rand.Next(responses.Length)];
+                    string selectedResponse = responses[rand.Next(responses.Length)];
+
+                    return AdaptResponseToMood(selectedResponse, currentMood);
                 }
             }
 
-            // Memory recall: remember interest
+            // Capture interest statements
             if (input.Contains("i'm interested in"))
             {
-                // Try to get last word as topic
                 string[] words = input.Split(' ');
                 string interest = words.Last();
                 UpdateTopicCount(interest);
                 return $"Great! I'll remember that you're interested in {interest}. It's a crucial part of staying safe online.";
             }
 
-            // Fallback responses for unknown input
+            // Fallback if no match is found
             string[] fallbackResponses = {
                 $"Hmm, I'm not sure about that, {userName}. Try asking something like 'What is phishing?'",
                 $"That's an interesting question! I'll try to learn more about that.",
@@ -229,6 +249,7 @@ namespace ST10395938_PROG6221_POEPart1
             return fallbackResponses[rand.Next(fallbackResponses.Length)];
         }
 
+        // Tracks topic frequency and updates favorite topic
         private static void UpdateTopicCount(string topic)
         {
             if (topicCounts.ContainsKey(topic))
@@ -236,16 +257,31 @@ namespace ST10395938_PROG6221_POEPart1
             else
                 topicCounts[topic] = 1;
 
-            // Determine the most frequently mentioned topic
             favoriteTopic = topicCounts.OrderByDescending(kv => kv.Value).First().Key;
         }
 
+        // Gets all responses associated with a topic
         private static string[] GetResponsesByTopic(string topic)
         {
-            if (topicResponses.ContainsKey(topic))
-                return topicResponses[topic];
-            else
-                return new string[0];
+            return topicResponses.ContainsKey(topic) ? topicResponses[topic] : new string[0];
         }
+
+        // Adapts a response based on the current mood
+        private static string AdaptResponseToMood(string baseResponse, string mood)
+        {
+            switch (mood)
+            {
+                case "worried":
+                    return $"{baseResponse} Don't worry — you're not alone in this. These steps can really help protect you.";
+                case "curious":
+                    return $"{baseResponse} There's so much more to learn — you're on the right track exploring this topic!";
+                case "frustrated":
+                    return $"{baseResponse} It can feel complicated, but you're making progress. I'm here to guide you.";
+                default:
+                    return baseResponse;
+            }
+        }
+
     }
+
 }
