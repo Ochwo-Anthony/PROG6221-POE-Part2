@@ -76,24 +76,30 @@ v1.1.0 — 2025-05-26:
 New Features & Enhancements
 
 Sentiment Detection & Empathy
-Added advanced sentiment detection to recognize emotional tones like worried, curious, and frustrated.
-The chatbot now provides tailored, empathetic responses based on the detected mood to improve user experience.
+
+- Added advanced sentiment detection to recognize emotional tones like worried, curious, and frustrated.
+- The chatbot now provides tailored, empathetic responses based on the detected mood to improve user experience.
 
 Dynamic Conversation Flow
-Introduced support for contextual follow-ups using triggers like "more info" or "anything else", allowing users to explore topics in depth.
-Sentiment-based responses are automatically cleared when a new topic is detected, ensuring relevant tone adaptation.
+
+- Introduced support for contextual follow-ups using triggers like "more info" or "anything else", allowing users to explore topics in depth.
+- Sentiment-based responses are automatically cleared when a new topic is detected, ensuring relevant tone adaptation.
 
 Personalized Interaction
-Tracks favorite topics based on user queries and delivers proactive tips after every few messages to reinforce learning.
+
+- Tracks favorite topics based on user queries and delivers proactive tips after every few messages to reinforce learning.
 
 Structured & Maintainable Design
-Refactored response handling using dictionaries and modular functions for better scalability and easier maintenance.
+
+- Refactored response handling using dictionaries and modular functions for better scalability and easier maintenance.
 
 Intelligent Proactive Prompts
-Periodically provides helpful tips tailored to the user’s most engaged topic to encourage safer online habits.
+
+- Periodically provides helpful tips tailored to the user’s most engaged topic to encourage safer online habits.
 
 Input Validation & Robust Handling
-Improved user input checks to prevent empty questions and handle unrecognized input gracefully with friendly fallback suggestions.
+
+- Improved user input checks to prevent empty questions and handle unrecognized input gracefully with friendly fallback suggestions.
 
 v1.0.0 — 2025-04-17:
 
