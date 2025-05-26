@@ -70,6 +70,32 @@ Usage:
 CI/CD Pipeline:
 This project is integrated with GitHub Actions for Continuous Integration/Continuous Deployment (CI/CD). The configuration is in the .github/workflows/main.yml file. Upon pushing changes to the repository, the workflow automatically builds and tests the project.
 
+Release Notes
+
+v1.1.0 — 2025-05-26:
+
+Added sentiment detection to provide empathetic chatbot responses.
+
+Improved conversation flow with "more info" and "anything else" options.
+
+Implemented favorite topic tracking to personalize tips and prompts.
+
+Refactored response system with dictionaries for maintainability and performance.
+
+Enhanced proactive prompting based on user interest.
+
+Added robust input validation and error handling.
+
+v1.0.0 — 2025-04-17:
+
+Initial release of Cybersecurity Awareness Bot.
+
+Basic chatbot features covering password safety, phishing, privacy, and other cybersecurity topics.
+
+Included audio and ASCII art greetings.
+
+Implemented simple user input handling and random response selection.
+
     REFERENCES & CONTRIBUTIONS
  ----------------------------------------------------------------------------
 
